@@ -1,9 +1,10 @@
 /* eslint-disable prettier/prettier */
 
 
-import {Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ProductDocument } from './product.schema';
+import { JwtGuard } from 'src/auth/guards/jwt.guard';
 
 @Controller('product')
 export class ProductController {
@@ -25,6 +26,7 @@ export class ProductController {
            return this.productService.findAll()
         }
 
+        @UseGuards(JwtGuard)
         @Get(':id')
         findProduct(@Param('id') id: string):  Promise<ProductDocument> {
           return this.productService.find(id)
