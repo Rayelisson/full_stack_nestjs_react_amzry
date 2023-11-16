@@ -1,12 +1,46 @@
 import { Box, Button, Divider, Grid, Input, InputLabel, TextField, Typography } from '@mui/material'
 import React, { FC, FormEvent } from 'react'
 import { Link } from 'react-router-dom';
+import { validateEmail } from '../../../shared/utils/validation/email';
+import useInput from '../../../hooks/input/use-input';
+import { validatePasswordLength } from '../../../shared/utils/validation/length';
 
 
 const SigninFormComponent: FC = () => {
 
+  const {
+    text: email,
+    shouldDisplayError: emailHasError,
+    textChangeHandler: emailChangeHandler,
+    inputBlurHandler: emailBlurHandler,
+    clearHandler: emailClearHandler,
+  } = useInput(validateEmail);
+
+
+  const {
+    text: password,
+    shouldDisplayError: passwordHasError,
+    textChangeHandler: passwordChangeHandler,
+    inputBlurHandler: passwordBlurHandler,
+    clearHandler: passwordClearHandler,
+  } = useInput(validatePasswordLength);
+
+  const clearForm = () => {
+    emailClearHandler();
+    passwordClearHandler();
+  };
+
+
     const  onSubmitHandler = (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+
+      if (emailHasError || passwordHasError) return;
+
+      if (email.length === 0 || password.length === 0) return;
+  
+      console.log('USER: ', email, password);
+  
+      clearForm();
     } 
 
   return (
@@ -31,6 +65,11 @@ const SigninFormComponent: FC = () => {
              Email
           </InputLabel>
           <TextField 
+            value={email}
+            onChange={emailChangeHandler}
+            onBlur={emailBlurHandler}
+            error={emailHasError}
+            helperText={emailHasError ? 'Enter your email' : ''}
            type='email' 
            name='email' 
            id='email'
@@ -45,6 +84,13 @@ const SigninFormComponent: FC = () => {
              Password
           </InputLabel>
           <TextField 
+            value={password}
+            onChange={passwordChangeHandler}
+            onBlur={passwordBlurHandler}
+            error={passwordHasError}
+            helperText={
+              passwordHasError ? 'Minimum 6 characters required' : ''
+            }
            type='password' 
            name='password' 
            id='password'

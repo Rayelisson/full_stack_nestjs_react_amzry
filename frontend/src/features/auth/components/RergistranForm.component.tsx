@@ -1,13 +1,105 @@
-import { Box, Button, Divider, Grid, Input, InputLabel, TextField, Typography } from '@mui/material'
-import React, { FC, FormEvent } from 'react'
-import { Link } from 'react-router-dom';
+import { Box, Button, CircularProgress, Divider, Grid, Input, InputLabel, TextField, Typography } from '@mui/material'
+import React, { FC, FormEvent, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
+import useInput from '../../../hooks/input/use-input';
+import { validateNameLength, validatePasswordLength } from '../../../shared/utils/validation/length';
+import { validateEmail } from '../../../shared/utils/validation/email';
+import { NewUser } from '../models/NewUser';
+import { useAppDispatch, useAppSelector } from '../../../hooks/redux/hooks';
+import { register, reset } from '../authSlice';
 
 
 const RegistranFormComponent: FC = () => {
 
+  const {
+    text: name,
+    shouldDisplayError: nameHasError,
+    textChangeHandler: nameChangeHandler,
+    inputBlurHandler: nameBlurHandler,
+    clearHandler: nameClearHandler,
+  } = useInput(validateNameLength);
+
+  const {
+    text: email,
+    shouldDisplayError: emailHasError,
+    textChangeHandler: emailChangeHandler,
+    inputBlurHandler: emailBlurHandler,
+    clearHandler: emailClearHandler,
+  } = useInput(validateEmail);
+
+
+  const {
+    text: password,
+    shouldDisplayError: passwordHasError,
+    textChangeHandler: passwordChangeHandler,
+    inputBlurHandler: passwordBlurHandler,
+    clearHandler: passwordClearHandler,
+  } = useInput(validatePasswordLength);
+
+  const {
+    text: confirmPassword,
+    shouldDisplayError: confirmPasswordHasError,
+    textChangeHandler: confirmPasswordChangeHandler,
+    inputBlurHandler: confirmPasswordBlurHandler,
+    clearHandler: confirmPasswordClearHandler,
+  } = useInput(validatePasswordLength);
+
+  const clearForm = () => {
+    nameClearHandler();
+    emailClearHandler();
+    passwordClearHandler();
+    confirmPasswordClearHandler();
+  };
+
+   const dispatch = useAppDispatch()
+
+   const { isLoading, isSuccess } = useAppSelector((state) => state.auth);
+
+   const navigate = useNavigate();
+
+   useEffect(() => {
+    if (isSuccess) {
+      dispatch(reset());
+      clearForm();
+      navigate('/signin');
+    }
+  }, [isSuccess, dispatch]);
+
     const  onSubmitHandler = (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-    } 
+
+    
+    if (password !== confirmPassword) return;
+
+    if (
+      nameHasError ||
+      emailHasError ||
+      passwordHasError ||
+      confirmPasswordHasError
+    )
+      return;
+
+    if (
+      name.length === 0 ||
+      email.length === 0 ||
+      password.length === 0 ||
+      confirmPassword.length === 0
+    )
+      return;
+
+    const newUser: NewUser = {
+      name,
+      email,
+      password,
+    };
+
+
+    dispatch(register(newUser))
+  };
+
+  if (isLoading)
+  return <CircularProgress sx={{ marginTop: '64px' }} color='primary' />;
+
 
   return (
     <Box sx={{
@@ -29,12 +121,17 @@ const RegistranFormComponent: FC = () => {
           >
             Your name
           </InputLabel>
-          <TextField 
-           type='text' 
-           name='name' 
-           id='name'
-           variant='outlined' 
-           size='small'
+          <TextField
+            value={name}
+            onChange={nameChangeHandler}
+            onBlur={nameBlurHandler}
+            error={nameHasError}
+            helperText={nameHasError ? 'Enter your name' : ''}
+            type='text'
+            name='name'
+            id='name'
+            variant='outlined'
+            size='small'
           />
 
          <InputLabel
@@ -43,13 +140,19 @@ const RegistranFormComponent: FC = () => {
           >
              Email
           </InputLabel>
-          <TextField 
+          <TextField
+            value={email}
+            onChange={emailChangeHandler}
+            onBlur={emailBlurHandler}
+            error={emailHasError}
+            helperText={emailHasError ? 'Enter your Email' : ''} 
            type='email' 
            name='email' 
            id='email'
            variant='outlined' 
            size='small'
           />
+
 
          <InputLabel
            sx={{ fontWeight: 500, marginTop: 1, color:'#000000'}}
@@ -58,6 +161,11 @@ const RegistranFormComponent: FC = () => {
              Password
           </InputLabel>
           <TextField 
+            value={password}
+            onChange={passwordChangeHandler}
+            onBlur={passwordBlurHandler}
+            error={passwordHasError}
+            helperText={passwordHasError ? 'Minium 6 characters' : ''} 
            type='password' 
            name='password' 
            id='password'
@@ -72,12 +180,23 @@ const RegistranFormComponent: FC = () => {
              Re-enter Password
           </InputLabel>
           <TextField 
+            value={confirmPassword}
+            onChange={confirmPasswordChangeHandler}
+            onBlur={confirmPasswordBlurHandler}
+            error={confirmPassword.length > 0 && password !== confirmPassword}
+            helperText={
+              confirmPassword.length > 0 && password !== confirmPassword
+                ? 'Passwords must match'
+                : ''
+            }
            type='password' 
            name='confirmPassword' 
            id='confirmPassword'
            variant='outlined' 
            size='small'
           />
+
+
 
           <Button 
            variant='contained'
