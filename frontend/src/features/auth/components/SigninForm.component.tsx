@@ -1,9 +1,12 @@
-import { Box, Button, Divider, Grid, Input, InputLabel, TextField, Typography } from '@mui/material'
-import React, { FC, FormEvent } from 'react'
-import { Link } from 'react-router-dom';
+import { Box, Button, CircularProgress, Divider, Grid, Input, InputLabel, TextField, Typography } from '@mui/material'
+import React, { FC, FormEvent, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
 import { validateEmail } from '../../../shared/utils/validation/email';
 import useInput from '../../../hooks/input/use-input';
 import { validatePasswordLength } from '../../../shared/utils/validation/length';
+import { useAppDispatch, useAppSelector } from '../../../hooks/redux/hooks';
+import { login, reset } from '../authSlice';
+import { LoginUser } from '../models/LoginUser.interface';
 
 
 const SigninFormComponent: FC = () => {
@@ -15,7 +18,6 @@ const SigninFormComponent: FC = () => {
     inputBlurHandler: emailBlurHandler,
     clearHandler: emailClearHandler,
   } = useInput(validateEmail);
-
 
   const {
     text: password,
@@ -30,18 +32,40 @@ const SigninFormComponent: FC = () => {
     passwordClearHandler();
   };
 
+  const dispatch = useAppDispatch();
 
-    const  onSubmitHandler = (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+  const { isLoading, isSuccess, isAuthenticated } = useAppSelector(
+    (state) => state.auth
+  );
 
-      if (emailHasError || passwordHasError) return;
+  const navigate = useNavigate();
 
-      if (email.length === 0 || password.length === 0) return;
-  
-      console.log('USER: ', email, password);
-  
+  useEffect(() => {
+    if (isSuccess) {
+      dispatch(reset());
       clearForm();
-    } 
+    }
+  }, [isSuccess, dispatch]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    navigate('/');
+  }, [isAuthenticated]);
+
+  const onSubmitHandler = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (emailHasError || passwordHasError) return;
+
+    if (email.length === 0 || password.length === 0) return;
+
+    const loginUser: LoginUser = { email, password };
+
+    dispatch(login(loginUser));
+  };
+
+  if (isLoading)
+    return <CircularProgress sx={{ marginTop: '64px' }} color='primary' />;
 
   return (
        <>

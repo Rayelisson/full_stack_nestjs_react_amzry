@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt'
 import { NewUserDTO } from 'src/user/dtos/new-user.dto';
@@ -21,7 +21,7 @@ export class AuthService {
 
         const existingUser = await this.userService.findByEmail(email)
 
-        if (existingUser) return
+        if (existingUser) throw new HttpException('Invalid JWT', HttpStatus.UNAUTHORIZED)
 
         const hashedPassword = await this.hashPassword(password)
 
@@ -56,10 +56,19 @@ export class AuthService {
        const { email, password} = existingUser
        const user = await this.validateUser(email, password)
 
-       if (!user) return null 
+       if (!user) throw new HttpException('Invalid JWT', HttpStatus.UNAUTHORIZED)
 
        const jwt = await this.jwtService.signAsync({ user })
        return { token: jwt}
+    }
+
+    async verifyJwt(jwt: string): Promise<{ exp: number }> {
+      try {
+        const { exp } = await this.jwtService.verifyAsync(jwt)
+        return { exp }
+      } catch (error) {
+          throw new HttpException('Invalid JWT', HttpStatus.UNAUTHORIZED)
+        }
     }
 
 }

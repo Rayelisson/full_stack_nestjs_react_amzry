@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { NewUserDTO } from 'src/user/dtos/new-user.dto';
 import { UserDetails } from 'src/user/user-details.interface';
@@ -19,5 +19,11 @@ export class AuthController {
       login(@Body() user: ExistingUserDTO): Promise<{ token: string } | null>  {
     return this.authService.login(user)
   }
+
+  @Post('verify-jwt')
+  @HttpCode(HttpStatus.OK)
+  verifyJwt(@Body() payload: {jwt: string}) {
+   return this.authService.verifyJwt(payload.jwt)
+ }
 
 }
